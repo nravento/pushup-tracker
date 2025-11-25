@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Push-Ups">
+    <title>Push-Up Tracker</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0a0a0a;
+            --surface: #141414;
+            --surface-hover: #1a1a1a;
+            --accent: #ff3d3d;
+            --accent-glow: rgba(255, 61, 61, 0.3);
+            --text: #ffffff;
+            --text-muted: #666666;
+            --success: #22c55e;
+            --skip: #ef4444;
+        }
+
+        html, body {
+            height: 100%;
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        .app {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 28px;
+            letter-spacing: 2px;
+            color: var(--accent);
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            transition: color 0.2s;
+        }
+
+        .settings-btn:hover {
+            color: var(--text);
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-card.large {
+            grid-column: span 2;
+            padding: 32px 20px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 48px;
+            line-height: 1;
+            color: var(--text);
+        }
+
+        .stat-card.large .stat-value {
+            font-size: 80px;
+            color: var(--accent);
+            text-shadow: 0 0 40px var(--accent-glow);
+        }
+
+        .stat-unit {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* History Section */
+        .history-section {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 20px;
+            flex: 1;
+        }
+
+        .history-header {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .history-day {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            background: var(--bg);
+        }
+
+        .history-day .day-label {
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+
+        .history-day .day-count {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 18px;
+            color: var(--text);
+        }
+
+        .history-day.active {
+            background: linear-gradient(135deg, var(--accent) 0%, #ff6b6b 100%);
+        }
+
+        .history-day.active .day-label,
+        .history-day.active .day-count {
+            color: white;
+        }
+
+        .history-day.today {
+            border: 2px solid var(--accent);
+        }
+
+        .history-day.empty {
+            opacity: 0.3;
+        }
+
+        /* Action Buttons (shown when notification opens) */
+        .action-panel {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 100;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 32px;
+            padding: 24px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .action-panel.visible {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .action-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 36px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .action-subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 32px 24px;
+            border: none;
+            border-radius: 20px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 24px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .action-btn:active {
+            transform: scale(0.96);
+        }
+
+        .action-btn.done {
+            background: var(--success);
+            color: white;
+        }
+
+        .action-btn.done:hover {
+            box-shadow: 0 0 40px rgba(34, 197, 94, 0.4);
+        }
+
+        .action-btn.skip {
+            background: var(--surface);
+            color: var(--text-muted);
+            border: 2px solid #333;
+        }
+
+        .action-btn.skip:hover {
+            border-color: var(--skip);
+            color: var(--skip);
+        }
+
+        .action-btn .emoji {
+            display: block;
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+
+        .close-action {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 32px;
+            cursor: pointer;
+        }
+
+        /* Settings Panel */
+        .settings-panel {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 200;
+            flex-direction: column;
+            animation: slideIn 0.3s ease;
+        }
+
+        .settings-panel.visible {
+            display: flex;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        .settings-header {
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .settings-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 28px;
+            letter-spacing: 2px;
+        }
+
+        .close-settings {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 28px;
+            cursor: pointer;
+        }
+
+        .settings-content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .setting-group {
+            margin-bottom: 32px;
+        }
+
+        .setting-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .setting-input {
+            width: 100%;
+            background: var(--surface);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 16px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 18px;
+            transition: border-color 0.2s;
+        }
+
+        .setting-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .time-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .notification-status {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--skip);
+        }
+
+        .status-dot.enabled {
+            background: var(--success);
+        }
+
+        .enable-btn {
+            margin-top: 12px;
+            width: 100%;
+            background: var(--accent);
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            color: white;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 18px;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+
+        .enable-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--surface);
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 300;
+        }
+
+        .toast.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Test Button (for demo) */
+        .test-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--surface);
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            color: var(--accent);
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 50;
+        }
+
+        .test-btn:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state .emoji {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header>
+            <div class="logo">PUSH-UPS</div>
+            <button class="settings-btn" onclick="openSettings()">⚙</button>
+        </header>
+
+        <main>
+            <div class="stats-grid">
+                <div class="stat-card large">
+                    <div class="stat-label">Today</div>
+                    <div class="stat-value" id="todayTotal">0</div>
+                    <div class="stat-unit">push-ups</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Current Streak</div>
+                    <div class="stat-value" id="streak">0</div>
+                    <div class="stat-unit">days</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Sets Today</div>
+                    <div class="stat-value" id="setsToday">0</div>
+                    <div class="stat-unit">completed</div>
+                </div>
+            </div>
+
+            <div class="history-section">
+                <div class="history-header">Last 7 Days</div>
+                <div class="history-grid" id="historyGrid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Test notification button -->
+        <button class="test-btn" onclick="showActionPanel()" title="Test notification">💪</button>
+    </div>
+
+    <!-- Action Panel (appears on notification click) -->
+    <div class="action-panel" id="actionPanel">
+        <button class="close-action" onclick="closeActionPanel()">×</button>
+        <div>
+            <div class="action-title">TIME FOR PUSH-UPS, BITCH!</div>
+            <div class="action-subtitle" id="actionSubtitle">40 push-ups</div>
+        </div>
+        <div class="action-buttons">
+            <button class="action-btn done" onclick="logSet(true)">
+                <span class="emoji">✅</span>
+                DONE
+            </button>
+            <button class="action-btn skip" onclick="logSet(false)">
+                <span class="emoji">❌</span>
+                SKIP
+            </button>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-header">
+            <div class="settings-title">SETTINGS</div>
+            <button class="close-settings" onclick="closeSettings()">×</button>
+        </div>
+        <div class="settings-content">
+            <div class="setting-group">
+                <div class="setting-label">Push-ups per set</div>
+                <input type="number" class="setting-input" id="pushupCount" value="40" min="1" max="500" onchange="saveSettings()">
+            </div>
+
+            <div class="setting-group">
+                <div class="setting-label">Schedule</div>
+                <div class="time-inputs">
+                    <div>
+                        <div class="setting-label" style="margin-top: 0">Wake up</div>
+                        <input type="time" class="setting-input" id="wakeTime" value="07:00" onchange="saveSettings()">
+                    </div>
+                    <div>
+                        <div class="setting-label" style="margin-top: 0">Bedtime</div>
+                        <input type="time" class="setting-input" id="bedTime" value="22:00" onchange="saveSettings()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <div class="setting-label">Notifications</div>
+                <div class="notification-status">
+                    <div class="status-dot" id="notifDot"></div>
+                    <span id="notifStatus">Checking...</span>
+                </div>
+                <button class="enable-btn" id="enableNotifBtn" onclick="requestNotificationPermission()">
+                    Enable Notifications
+                </button>
+            </div>
+
+            <div class="setting-group">
+                <div class="setting-label">Data</div>
+                <button class="enable-btn" style="background: var(--skip)" onclick="resetData()">
+                    Reset All Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // State
+        let settings = {
+            pushupCount: 40,
+            wakeTime: '07:00',
+            bedTime: '22:00'
+        };
+
+        let data = {
+            history: {}, // { '2024-01-15': { total: 120, sets: 3 } }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            loadData();
+            updateUI();
+            checkNotificationPermission();
+            setupServiceWorker();
+            
+            // Check if opened from notification
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('action') === 'pushup') {
+                showActionPanel();
+            }
+        });
+
+        // Service Worker & Notifications
+        async function setupServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.register('sw.js');
+                    console.log('SW registered:', registration);
+                } catch (error) {
+                    // Service worker failed - app still works, just no offline support
+                    console.log('SW not available - running in online-only mode');
+                }
+            }
+            // Always setup notifications (works with or without SW)
+            scheduleNotifications();
+        }
+
+        function checkNotificationPermission() {
+            const dot = document.getElementById('notifDot');
+            const status = document.getElementById('notifStatus');
+            const btn = document.getElementById('enableNotifBtn');
+
+            if (!('Notification' in window)) {
+                status.textContent = 'Not supported';
+                btn.disabled = true;
+                return;
+            }
+
+            if (Notification.permission === 'granted') {
+                dot.classList.add('enabled');
+                status.textContent = 'Enabled';
+                btn.style.display = 'none';
+            } else if (Notification.permission === 'denied') {
+                status.textContent = 'Blocked - enable in browser settings';
+                btn.disabled = true;
+            } else {
+                status.textContent = 'Not enabled';
+            }
+        }
+
+        async function requestNotificationPermission() {
+            const permission = await Notification.requestPermission();
+            checkNotificationPermission();
+            
+            if (permission === 'granted') {
+                showToast('Notifications enabled! 💪');
+                scheduleNotifications();
+            }
+        }
+
+        function scheduleNotifications() {
+            // Clear any existing timers
+            if (window.notificationTimer) {
+                clearInterval(window.notificationTimer);
+            }
+
+            // Check every minute if we should show a notification
+            window.notificationTimer = setInterval(() => {
+                checkAndNotify();
+            }, 60000);
+
+            // Also check immediately
+            checkAndNotify();
+        }
+
+        function checkAndNotify() {
+            const now = new Date();
+            const currentTime = now.getHours() * 60 + now.getMinutes();
+            
+            const [wakeH, wakeM] = settings.wakeTime.split(':').map(Number);
+            const [bedH, bedM] = settings.bedTime.split(':').map(Number);
+            const wakeMinutes = wakeH * 60 + wakeM;
+            const bedMinutes = bedH * 60 + bedM;
+
+            // Check if within active hours and at the top of the hour
+            if (currentTime >= wakeMinutes && currentTime <= bedMinutes && now.getMinutes() === 0) {
+                // Check if we haven't already notified this hour
+                const lastNotif = localStorage.getItem('lastNotifHour');
+                const currentHour = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${now.getHours()}`;
+                
+                if (lastNotif !== currentHour) {
+                    localStorage.setItem('lastNotifHour', currentHour);
+                    sendNotification();
+                }
+            }
+        }
+
+        function sendNotification() {
+            if (Notification.permission === 'granted') {
+                const notif = new Notification('Time for push-ups, Bitch! 💪', {
+                    body: `Do your ${settings.pushupCount} push-ups now!`,
+                    icon: 'icon-192.png',
+                    badge: 'icon-192.png',
+                    tag: 'pushup-reminder',
+                    requireInteraction: true,
+                    data: { action: 'pushup' }
+                });
+
+                notif.onclick = () => {
+                    window.focus();
+                    showActionPanel();
+                    notif.close();
+                };
+            }
+        }
+
+        // Data Management
+        function loadSettings() {
+            const saved = localStorage.getItem('pushup_settings');
+            if (saved) {
+                settings = { ...settings, ...JSON.parse(saved) };
+            }
+            
+            document.getElementById('pushupCount').value = settings.pushupCount;
+            document.getElementById('wakeTime').value = settings.wakeTime;
+            document.getElementById('bedTime').value = settings.bedTime;
+        }
+
+        function saveSettings() {
+            settings.pushupCount = parseInt(document.getElementById('pushupCount').value) || 40;
+            settings.wakeTime = document.getElementById('wakeTime').value;
+            settings.bedTime = document.getElementById('bedTime').value;
+            
+            localStorage.setItem('pushup_settings', JSON.stringify(settings));
+            updateUI();
+            scheduleNotifications();
+            showToast('Settings saved');
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('pushup_data');
+            if (saved) {
+                data = JSON.parse(saved);
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('pushup_data', JSON.stringify(data));
+        }
+
+        function resetData() {
+            if (confirm('Are you sure? This will delete all your push-up history.')) {
+                data = { history: {} };
+                saveData();
+                updateUI();
+                showToast('Data reset');
+            }
+        }
+
+        // Actions
+        function showActionPanel() {
+            document.getElementById('actionSubtitle').textContent = `${settings.pushupCount} push-ups`;
+            document.getElementById('actionPanel').classList.add('visible');
+        }
+
+        function closeActionPanel() {
+            document.getElementById('actionPanel').classList.remove('visible');
+        }
+
+        function logSet(completed) {
+            const today = getDateKey();
+            
+            if (!data.history[today]) {
+                data.history[today] = { total: 0, sets: 0, skips: 0 };
+            }
+
+            if (completed) {
+                data.history[today].total += settings.pushupCount;
+                data.history[today].sets += 1;
+                showToast(`+${settings.pushupCount} push-ups! 💪`);
+            } else {
+                data.history[today].skips = (data.history[today].skips || 0) + 1;
+                showToast('Set skipped');
+            }
+
+            saveData();
+            updateUI();
+            closeActionPanel();
+        }
+
+        // UI Updates
+        function updateUI() {
+            const today = getDateKey();
+            const todayData = data.history[today] || { total: 0, sets: 0 };
+
+            document.getElementById('todayTotal').textContent = todayData.total;
+            document.getElementById('setsToday').textContent = todayData.sets;
+            document.getElementById('streak').textContent = calculateStreak();
+            
+            renderHistory();
+        }
+
+        function calculateStreak() {
+            let streak = 0;
+            const today = new Date();
+            
+            // Start from yesterday for streak calculation (today might not be complete)
+            let checkDate = new Date(today);
+            checkDate.setDate(checkDate.getDate() - 1);
+
+            // Check if today has any activity - if so, include it
+            const todayKey = getDateKey(today);
+            if (data.history[todayKey] && data.history[todayKey].total > 0) {
+                streak = 1;
+                checkDate = new Date(today);
+                checkDate.setDate(checkDate.getDate() - 1);
+            }
+
+            // Count backwards
+            while (true) {
+                const key = getDateKey(checkDate);
+                if (data.history[key] && data.history[key].total > 0) {
+                    streak++;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
+
+            return streak;
+        }
+
+        function renderHistory() {
+            const grid = document.getElementById('historyGrid');
+            grid.innerHTML = '';
+
+            const today = new Date();
+            const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const key = getDateKey(date);
+                const dayData = data.history[key];
+                const isToday = i === 0;
+
+                const div = document.createElement('div');
+                div.className = 'history-day';
+                
+                if (dayData && dayData.total > 0) {
+                    div.classList.add('active');
+                } else if (!dayData) {
+                    div.classList.add('empty');
+                }
+                
+                if (isToday) {
+                    div.classList.add('today');
+                }
+
+                div.innerHTML = `
+                    <span class="day-label">${days[date.getDay()]}</span>
+                    <span class="day-count">${dayData ? dayData.total : 0}</span>
+                `;
+
+                grid.appendChild(div);
+            }
+        }
+
+        // Helpers
+        function getDateKey(date = new Date()) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('visible');
+            
+            setTimeout(() => {
+                toast.classList.remove('visible');
+            }, 2000);
+        }
+
+        function openSettings() {
+            document.getElementById('settingsPanel').classList.add('visible');
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsPanel').classList.remove('visible');
+        }
+    </script>
+</body>
+</html>
