@@ -829,40 +829,40 @@
         }
 
         function renderHistory() {
-            const grid = document.getElementById('historyGrid');
-            grid.innerHTML = '';
+    const grid = document.getElementById('historyGrid');
+    grid.innerHTML = '';
 
-            const today = new Date();
-            const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    const today = new Date();
+    const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date(today);
-                date.setDate(date.getDate() - i);
-                const key = getDateKey(date);
-                const dayData = data.history[key];
-                const isToday = i === 0;
+    for (let i = 29; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const key = getDateKey(date);
+        const dayData = data.history[key];
+        const isToday = i === 0;
 
-                const div = document.createElement('div');
-                div.className = 'history-day';
-                
-                if (dayData && dayData.total > 0) {
-                    div.classList.add('active');
-                } else if (!dayData) {
-                    div.classList.add('empty');
-                }
-                
-                if (isToday) {
-                    div.classList.add('today');
-                }
-
-                div.innerHTML = `
-                    <span class="day-label">${days[date.getDay()]}</span>
-                    <span class="day-count">${dayData ? dayData.total : 0}</span>
-                `;
-
-                grid.appendChild(div);
-            }
+        const div = document.createElement('div');
+        div.className = 'history-day';
+        
+        if (dayData && dayData.total > 0) {
+            div.classList.add('active');
+        } else if (!dayData) {
+            div.classList.add('empty');
         }
+        
+        if (isToday) {
+            div.classList.add('today');
+        }
+
+        div.innerHTML = `
+            <span class="day-label">${date.getDate()}</span>
+            <span class="day-count">${dayData ? dayData.total : 0}</span>
+        `;
+
+        grid.appendChild(div);
+    }
+}
 
         // Helpers
         function getDateKey(date = new Date()) {
