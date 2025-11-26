@@ -84,29 +84,57 @@
         /* Main Content */
         main {
             flex: 1;
-            padding: 24px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 16px;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        @media (min-width: 400px) {
+            main {
+                padding: 24px;
+                gap: 24px;
+            }
         }
 
         /* Stats Cards */
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
+            gap: 12px;
+        }
+
+        @media (min-width: 400px) {
+            .stats-grid {
+                gap: 16px;
+            }
         }
 
         .stat-card {
             background: var(--surface);
-            border-radius: 16px;
-            padding: 20px;
+            border-radius: 12px;
+            padding: 16px;
             text-align: center;
+        }
+
+        @media (min-width: 400px) {
+            .stat-card {
+                border-radius: 16px;
+                padding: 20px;
+            }
         }
 
         .stat-card.large {
             grid-column: span 2;
-            padding: 32px 20px;
+            padding: 24px 16px;
+        }
+
+        @media (min-width: 400px) {
+            .stat-card.large {
+                padding: 32px 20px;
+            }
         }
 
         .stat-label {
@@ -119,15 +147,27 @@
 
         .stat-value {
             font-family: 'Bebas Neue', sans-serif;
-            font-size: 48px;
+            font-size: 36px;
             line-height: 1;
             color: var(--text);
         }
 
+        @media (min-width: 400px) {
+            .stat-value {
+                font-size: 48px;
+            }
+        }
+
         .stat-card.large .stat-value {
-            font-size: 80px;
+            font-size: 60px;
             color: var(--accent);
             text-shadow: 0 0 40px var(--accent-glow);
+        }
+
+        @media (min-width: 400px) {
+            .stat-card.large .stat-value {
+                font-size: 80px;
+            }
         }
 
         .stat-unit {
@@ -140,8 +180,15 @@
         .history-section {
             background: var(--surface);
             border-radius: 16px;
-            padding: 20px;
+            padding: 16px;
             flex: 1;
+            overflow: hidden;
+        }
+
+        @media (min-width: 400px) {
+            .history-section {
+                padding: 20px;
+            }
         }
 
         .history-header {
@@ -149,25 +196,39 @@
             text-transform: uppercase;
             letter-spacing: 1.5px;
             color: var(--text-muted);
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
         .history-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 6px;
+            gap: 4px;
             width: 100%;
+        }
+
+        @media (min-width: 400px) {
+            .history-grid {
+                gap: 8px;
+            }
         }
 
         .history-day {
             aspect-ratio: 1;
-            border-radius: 8px;
+            border-radius: 6px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
+            font-size: 9px;
             background: var(--bg);
+            min-width: 0;
+        }
+
+        @media (min-width: 400px) {
+            .history-day {
+                border-radius: 8px;
+                font-size: 10px;
+            }
         }
 
         .history-day .day-label {
@@ -177,8 +238,14 @@
 
         .history-day .day-count {
             font-family: 'Bebas Neue', sans-serif;
-            font-size: 18px;
+            font-size: 14px;
             color: var(--text);
+        }
+
+        @media (min-width: 400px) {
+            .history-day .day-count {
+                font-size: 18px;
+            }
         }
 
         .history-day.active {
@@ -191,7 +258,7 @@
         }
 
         .history-day.today {
-            box-shadow: inset 0 0 0 2px var(--accent);
+            border: 2px solid var(--accent);
         }
 
         .history-day.empty {
@@ -502,7 +569,7 @@
             </div>
 
             <div class="history-section">
-                <div class="history-header">Last 30 Days</div>
+                <div class="history-header">Last 7 Days</div>
                 <div class="history-grid" id="historyGrid">
                     <!-- Populated by JS -->
                 </div>
@@ -829,40 +896,40 @@
         }
 
         function renderHistory() {
-    const grid = document.getElementById('historyGrid');
-    grid.innerHTML = '';
+            const grid = document.getElementById('historyGrid');
+            grid.innerHTML = '';
 
-    const today = new Date();
-    const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+            const today = new Date();
+            const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-    for (let i = 29; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        const key = getDateKey(date);
-        const dayData = data.history[key];
-        const isToday = i === 0;
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const key = getDateKey(date);
+                const dayData = data.history[key];
+                const isToday = i === 0;
 
-        const div = document.createElement('div');
-        div.className = 'history-day';
-        
-        if (dayData && dayData.total > 0) {
-            div.classList.add('active');
-        } else if (!dayData) {
-            div.classList.add('empty');
+                const div = document.createElement('div');
+                div.className = 'history-day';
+                
+                if (dayData && dayData.total > 0) {
+                    div.classList.add('active');
+                } else if (!dayData) {
+                    div.classList.add('empty');
+                }
+                
+                if (isToday) {
+                    div.classList.add('today');
+                }
+
+                div.innerHTML = `
+                    <span class="day-label">${days[date.getDay()]}</span>
+                    <span class="day-count">${dayData ? dayData.total : 0}</span>
+                `;
+
+                grid.appendChild(div);
+            }
         }
-        
-        if (isToday) {
-            div.classList.add('today');
-        }
-
-        div.innerHTML = `
-            <span class="day-label">${date.getDate()}</span>
-            <span class="day-count">${dayData ? dayData.total : 0}</span>
-        `;
-
-        grid.appendChild(div);
-    }
-}
 
         // Helpers
         function getDateKey(date = new Date()) {
